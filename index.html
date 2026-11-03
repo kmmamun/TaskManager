@@ -2,7 +2,7 @@
 <html lang="en"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f05a28">
+<meta name="theme-color" content="#7b6ef6">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="TaskManager">
 <link rel="manifest" href="manifest.json"><link rel="icon" href="icons/favicon.png">
@@ -12,41 +12,60 @@
 <div class="scrim" id="scrim" onclick="side(0)"></div>
 <div class="shell">
 <aside class="side" id="side">
-  <div class="brand"><img src="icons/icon-192.png" alt=""><span>Task Manager</span></div>
-  <button class="nav on" onclick="scrollTo({top:0,behavior:'smooth'});side(0)">▦ DASHBOARD</button>
-  <button class="nav" onclick="go('cards')">🗂 PROJECTS</button>
-  <button class="nav" onclick="go('tasksCard')">☰ MY TASK</button>
-  <button class="nav" onclick="go('calCard')">📅 CALENDAR</button>
-  <button class="nav" onclick="openCats();side(0)">🏷 CATEGORIES</button>
-  <button class="nav" onclick="openTeam();side(0)">👥 TEAM</button>
-  <button class="nav" id="installBtn" style="display:none" onclick="installApp()">📲 INSTALL APP</button>
+  <div class="prof"><img src="icons/icon-192.png" alt=""><b>Task Manager</b></div>
+  <label class="pl">Project</label><select id="fP" onchange="selCat=this.value;render()"></select>
+  <button class="nav on" onclick="scrollTo({top:0,behavior:'smooth'});side(0)">▦ Dashboard</button>
+  <button class="nav" onclick="go('tasksCard')">◎ Tasks</button>
+  <button class="nav" onclick="go('progCard')">▥ Projects</button>
+  <button class="nav" onclick="go('calCard')">📅 Calendar</button>
+  <div class="tl">Tools</div>
+  <button class="nav" onclick="openCats();side(0)">🏷 Categories</button>
+  <button class="nav" onclick="openTeam();side(0)">👥 Team</button>
+  <button class="nav" id="installBtn" style="display:none" onclick="installApp()">📲 Install App</button>
+  <button class="addbig" onclick="side(0);openTask()"><span>⊕</span>ADD NEW TASK</button>
+  <div class="ucard"><i class="av" style="background:#7b6ef6">MK</i><div><b>Mamun Khan</b><small>Manager</small></div></div>
 </aside>
 <main class="main">
 <header class="top">
   <button class="burger" onclick="side(1)">☰</button>
+  <div><h1>Dashboard</h1><small id="today"></small></div>
   <div class="search"><span>🔍</span><input id="q" placeholder="Search" oninput="render()"></div>
-  <div class="grow"></div>
-  <button class="ico" onclick="openTask()" title="New task">＋</button>
-  <button class="ico" id="bell" onclick="warnOnly=!warnOnly;render()" title="Due soon">🔔<b id="bellN"></b></button>
+  <div class="grow"></div><span class="dpill" id="dpill"></span>
+  <button class="ico" onclick="warnOnly=!warnOnly;render()" title="Due soon">🔔<b id="bellN"></b></button>
   <button class="ico" onclick="load(1)" title="Refresh">⟳</button>
   <button class="ico" id="themeBtn" onclick="theme()">🌙</button>
-  <div class="me">MK</div>
 </header>
 <div class="cols">
-  <div class="c1" id="cards"></div>
-  <section class="card c2" id="tasksCard">
-    <div class="chead"><b>My Tasks <span class="mu" id="tcount"></span></b>
+<div class="mc">
+  <section class="banner"><div><small>Welcome</small><h2>Your Task Management Area</h2><p id="bnTxt"></p>
+    <button class="btn" onclick="warnOnly=true;render();go('tasksCard')">View due soon</button></div><div class="art">🗓️</div></section>
+  <div class="stats">
+    <div class="st s1"><span>✔</span><div><b id="sT">0</b><small>Total Task</small></div></div>
+    <div class="st s2"><span>◔</span><div><b id="sI">0</b><small>In Progress</small></div></div>
+    <div class="st s3"><span>⏳</span><div><b id="sP">0</b><small>Pending</small></div></div>
+    <div class="st s4"><span>✓</span><div><b id="sD">0</b><small>Completed</small></div></div>
+  </div>
+  <div class="two">
+    <section class="card"><h3>Total work</h3><div id="chart"></div></section>
+    <section class="card"><h3>Task Percentage</h3><div id="rings"></div></section>
+  </div>
+  <div class="two">
+    <section id="progCard"><h3>Work Progress</h3><div class="pg" id="prog"></div></section>
+    <section class="card"><h3>Working Status</h3><div id="donut"></div></section>
+  </div>
+  <section class="card" id="tasksCard">
+    <div class="chead"><h3>My Tasks <span class="mu" id="tcount"></span></h3>
       <div class="fl"><select id="fA" onchange="render()"></select><select id="fS" onchange="render()"></select></div></div>
     <div id="chips"></div><div id="tlist"></div>
   </section>
-  <div class="c3">
-    <section class="card" id="calCard">
-      <div class="chead"><b id="calTitle"></b><div><button class="arr" onclick="mv(-1)">‹</button> <button class="arr" onclick="mv(1)">›</button></div></div>
-      <div class="cal" id="calGrid"></div>
-    </section>
-    <section class="card"><div class="chead"><b>Team</b><button class="arr" onclick="openTeam()">⚙</button></div><div id="teamBox"></div></section>
-  </div>
-</div></main></div>
+</div>
+<div class="rc">
+  <section class="card" id="calCard">
+    <div class="chead"><b id="calTitle"></b><div><button class="arr" onclick="mv(-1)">‹</button> <button class="arr" onclick="mv(1)">›</button></div></div>
+    <div class="cal" id="calGrid"></div>
+  </section>
+  <section class="card"><h3>Upcoming</h3><div id="upc"></div></section>
+</div></div></main></div>
 <button class="fab" onclick="openTask()">+</button>
 
 <div class="ov" id="mTask"><div class="modal"><h2 id="mTitle">Create new project/task</h2>
