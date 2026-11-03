@@ -1,144 +1,76 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Task Manager</title>
-  <meta name="theme-color" content="#1f242e">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TaskManager">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" href="icons/favicon.png">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="app.css">
-  <script>
-    // Apply saved theme before paint (no flash)
-    (function () {
-      try {
-        var t = JSON.parse(localStorage.getItem('tm_theme') || 'null');
-        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', t);
-      } catch (e) {}
-    })();
-  </script>
-</head>
-<body>
-
-  <!-- Splash -->
-  <div id="boot" class="screen">
-    <img class="boot-mark" src="icons/logo-mark.png" alt="Task Manager">
-    <div class="spinner"></div>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#03bda9">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TaskManager">
+<link rel="manifest" href="manifest.json"><link rel="icon" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Task Manager</title>
+<link rel="stylesheet" href="app.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head><body>
+<div class="shell">
+<div class="scrim" id="scrim" onclick="side(0)"></div>
+<aside class="side" id="side">
+  <div class="brand"><img src="icons/icon-192.png" alt="">Task Manager</div>
+  <button class="nav on" onclick="scrollTo({top:0,behavior:'smooth'});side(0)">⊞ Dashboard</button>
+  <button class="nav" onclick="openCats();side(0)">🏷️ Categories</button>
+  <button class="nav" onclick="openTeam();side(0)">👤 Team Members</button>
+  <div class="lbl">TEAM</div><div id="sideTeam"></div>
+  <button class="nav" id="installBtn" style="display:none" onclick="installApp()">📲 Install App</button>
+</aside>
+<main class="main">
+<header class="top">
+  <button class="ico burger" onclick="side(1)">☰</button>
+  <div class="title" id="greet">Dashboard</div>
+  <div class="grow"></div>
+  <div class="search"><span>🔍</span><input id="q" placeholder="Search tasks..." oninput="pg=1;render()"></div>
+  <button class="ico pri hide-m" onclick="openTask()">+</button>
+  <button class="ico" onclick="load(1)" title="Refresh">🔄</button>
+  <button class="ico" id="themeBtn" onclick="theme()">🌙</button>
+</header>
+<div class="wrap">
+  <div class="stats">
+    <div class="stat"><span>Total</span><b id="sT">0</b></div>
+    <div class="stat"><span>Pending</span><b id="sP">0</b></div>
+    <div class="stat"><span>In Progress</span><b id="sI">0</b></div>
+    <div class="stat"><span>Completed</span><b id="sD">0</b></div>
+    <div class="stat warn"><span>⚠️ Due soon / Overdue</span><b id="sW">0</b></div>
   </div>
-
-  <!-- Setup notice (config.js not filled) -->
-  <div id="setup" class="screen hidden">
-    <div class="auth-card">
-      <h1>Setup needed</h1>
-      <p>Open <code>config.js</code> and paste your Apps Script Web App URL. See the setup guide for steps.</p>
-    </div>
+  <div class="grid">
+    <section class="card">
+      <div class="chead"><b>Project Summary</b><div class="filters">
+        <select id="fM" onchange="pg=1;render()"></select><select id="fC" onchange="pg=1;render()"></select>
+        <select id="fA" onchange="pg=1;render()"></select><select id="fS" onchange="pg=1;render()"></select></div></div>
+      <div class="list" id="list"></div><div class="pager" id="pager"></div>
+    </section>
+    <section class="card"><b>Overall Progress</b>
+      <div style="height:220px;margin-top:10px"><canvas id="pie"></canvas></div><div id="legend"></div></section>
   </div>
+</div></main></div>
+<button class="fab" onclick="openTask()">+</button>
 
-  <!-- App -->
-  <div id="app" class="hidden">
-    <div class="shell">
+<div class="ov" id="mTask"><div class="modal"><h2 id="mTitle">Create new project/task</h2>
+  <div class="fg"><label>Task Name *</label><input id="fName" placeholder="e.g. Poster design"></div>
+  <div class="row"><div class="fg"><label>Category *</label><select id="fCat"></select></div>
+  <div class="fg"><label>Project Manager *</label><select id="fMgr"></select></div></div>
+  <div class="row"><div class="fg"><label>Deadline</label><input type="date" id="fDue"></div>
+  <div class="fg"><label>Status</label><select id="fSt"></select></div></div>
+  <div class="fg"><label>Given By</label><select id="fGiv" onchange="givChg()"></select>
+  <input id="fGivNew" placeholder="নতুন নাম লিখুন..." style="display:none;margin-top:8px"></div>
+  <div class="acts"><button class="btn ghost" onclick="closeM('mTask')">Cancel</button><button class="btn" id="saveBtn" onclick="saveTask()">Save</button></div></div></div>
 
-      <!-- Sidebar (desktop) -->
-      <aside class="sidebar">
-        <div class="brand">
-          <img src="icons/logo-mark.png" alt="">
-          <span>Task Manager</span>
-        </div>
-        <nav class="nav">
-          <button class="nav-item active" data-act="nav-home"><span data-ic="grid"></span>Dashboard</button>
-          <button class="nav-item" data-act="nav-tasks"><span data-ic="list"></span>Tasks</button>
-          <div class="nav-label">Manage</div>
-          <button class="nav-item" data-act="open-list" data-kind="categories"><span data-ic="tag"></span>Categories</button>
-          <button class="nav-item" data-act="open-list" data-kind="team"><span data-ic="users"></span>Team members</button>
-          <button class="nav-item" data-act="open-list" data-kind="givenBy"><span data-ic="user"></span>Given by names</button>
-        </nav>
-        <div class="side-foot">
-          <button class="me-chip" data-act="open-me">
-            <span class="avatar" style="background:#00bba5"><span data-ic="settings"></span></span>
-            <span class="me-text"><b>Settings</b><small>Theme · Deadline warning</small></span>
-          </button>
-        </div>
-      </aside>
-
-      <main class="main">
-        <header class="topbar">
-          <div class="top-left">
-            <img class="top-mark" src="icons/logo-mark.png" alt="">
-            <div>
-              <div class="greet" id="greet">Dashboard</div>
-            </div>
-          </div>
-          <div class="top-right">
-            <div class="search"><span data-ic="search"></span><input id="q" type="search" placeholder="Search tasks…" autocomplete="off"></div>
-            <button class="btn primary desk-only" data-act="new-task" id="btnNewTop"><span data-ic="plus"></span>New task</button>
-            <button class="icon-btn" data-act="refresh" title="Refresh"><span data-ic="refresh"></span></button>
-            <button class="icon-btn" data-act="toggle-theme" title="Theme"><span id="themeIc"></span></button>
-          </div>
-        </header>
-
-        <div class="container">
-          <div id="banner"></div>
-
-          <section class="stats" id="stats"></section>
-
-          <section class="grid" id="tasksSection">
-            <div class="card">
-              <div class="card-head">
-                <h3>Tasks</h3>
-                <button class="chip" id="alertChip" data-act="toggle-alerts"><span data-ic="alert"></span><span id="alertChipTxt">Alerts</span></button>
-              </div>
-              <div class="filters">
-                <select id="fMonth" class="filter"><option value="">All months</option></select>
-                <select id="fCategory" class="filter"><option value="">All categories</option></select>
-                <select id="fAssigned" class="filter"><option value="">All managers</option></select>
-                <select id="fStatus" class="filter"><option value="">All status</option></select>
-              </div>
-              <div class="mobile-search"><span data-ic="search"></span><input id="q2" type="search" placeholder="Search tasks…" autocomplete="off"></div>
-
-              <div class="table-wrap desk-only">
-                <table>
-                  <thead><tr><th>Task</th><th>Manager</th><th>Date</th><th>Deadline</th><th>Status</th><th>Given by</th><th></th></tr></thead>
-                  <tbody id="tbody"></tbody>
-                </table>
-              </div>
-              <div class="cards mob-only" id="cards"></div>
-              <div class="pager" id="pager"></div>
-            </div>
-
-            <div class="card">
-              <div class="card-head"><h3>Overall progress</h3></div>
-              <div class="chart-box"><canvas id="pie"></canvas></div>
-              <div class="legend" id="legend"></div>
-            </div>
-          </section>
-        </div>
-      </main>
-    </div>
-
-    <!-- Mobile bottom navigation -->
-    <nav class="bottom-nav">
-      <button data-act="nav-home" class="bn active" id="bnHome"><span data-ic="home"></span><small>Home</small></button>
-      <button data-act="nav-tasks" class="bn" id="bnTasks"><span data-ic="list"></span><small>Tasks</small></button>
-      <button data-act="new-task" class="bn-add" id="bnAdd" aria-label="New task"><span data-ic="plus"></span></button>
-      <button data-act="open-manage" class="bn"><span data-ic="users"></span><small>Manage</small></button>
-      <button data-act="open-me" class="bn"><span data-ic="settings"></span><small>Settings</small></button>
-    </nav>
-  </div>
-
-  <div id="modalRoot"></div>
-  <div id="toast" role="status"></div>
-
-  <script src="config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-  <script src="app.js" defer></script>
-</body>
-</html>
+<div class="ov" id="mCats"><div class="modal"><h2>🏷️ Categories</h2>
+  <div class="row"><input id="newCat" placeholder="New category"><button class="btn" onclick="addItem('addCategory','newCat')">Add</button></div>
+  <div class="box" id="catList"></div><div class="acts"><button class="btn ghost" onclick="closeM('mCats')">Close</button></div></div></div>
+<div class="ov" id="mTeam"><div class="modal"><h2>👤 Team Members</h2>
+  <div class="row"><input id="newMem" placeholder="Member name"><button class="btn" onclick="addItem('addTeamMember','newMem')">Add</button></div>
+  <div class="box" id="teamList"></div><div class="acts"><button class="btn ghost" onclick="closeM('mTeam')">Close</button></div></div></div>
+<div class="ov" id="mKey"><div class="modal"><h2>🔒 Passcode</h2>
+  <div class="fg"><input type="password" id="keyIn" placeholder="Enter passcode"></div>
+  <div class="acts"><button class="btn" onclick="saveKey()">Unlock</button></div></div></div>
+<div class="toast" id="toast"></div>
+<script src="config.js"></script><script src="app.js"></script>
+</body></html>
