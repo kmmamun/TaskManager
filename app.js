@@ -30,20 +30,34 @@ function warn(t){
 /* render */
 function opts(el,vals,first){$(el).innerHTML=(first!=null?`<option value="">${first}</option>`:'')+vals.map(v=>`<option>${esc(v)}</option>`).join('')}
 function fill(){
-  const k=[$('fA').value,$('fS').value];
-  opts('fA',S.teams.map(m=>m.name),'All Managers');opts('fS',STATUS,'Status');$('fA').value=k[0];$('fS').value=k[1];
+  const ids=['fCt','fA','fS','fG','fM'],k=ids.map(i=>$(i).value);
+  opts('fCt',S.cats.map(c=>c.name),'All Categories');opts('fA',S.teams.map(m=>m.name),'All Managers');opts('fS',STATUS,'All Status');opts('fG',S.givenBy,'All Given By');opts('fM',MN,'All Months');
+  ids.forEach((i,j)=>$(i).value=k[j]);
   opts('fCat',S.cats.map(c=>c.name));opts('fMgr',S.teams.map(m=>m.name));opts('fSt',STATUS);
 }
+let pg=1,lastSig='';const PAGE=8;
+function dlMatch(t,m){
+  if(!m)return true;const w=warn(t);if(m=='soon')return w&&w.c=='soon';if(m=='over')return w&&w.c=='over';if(m=='none')return !t.deadline;if(!t.deadline)return false;
+  const[y,mo,d]=t.deadline.split('-'),n=new Date(),days=Math.round((new Date(y,mo-1,d)-new Date(n.getFullYear(),n.getMonth(),n.getDate()))/864e5);return m=='today'?days==0:days>=0&&days<=7;
+}
 function tasks(){
-  const q=$('q').value.toLowerCase(),a=$('fA').value,s=$('fS').value;
-  const f=S.tasks.filter(t=>(!selCat||t.category==selCat)&&(!selDay||t.deadline==selDay)&&(!a||t.assignedTo==a)&&(!s||t.status==s)&&(!warnOnly||warn(t))&&(!q||t.taskName.toLowerCase().includes(q)));
-  f.sort((x,y)=>(x.status=='Done')-(y.status=='Done')||(x.deadline||'9').localeCompare(y.deadline||'9'));
+  const v=i=>$(i).value,q=$('q').value.toLowerCase();
+  const f=S.tasks.filter(t=>(!v('fCt')||t.category==v('fCt'))&&(!v('fA')||t.assignedTo==v('fA'))&&(!v('fS')||t.status==v('fS'))&&(!v('fG')||t.givenBy==v('fG'))&&(!v('fM')||t.month==v('fM'))&&dlMatch(t,v('fD'))&&(!selDay||t.deadline==selDay)&&(!warnOnly||warn(t))&&(!q||t.taskName.toLowerCase().includes(q)));
+  const o=v('fO');
+  f.sort(o=='new'?(x,y)=>(y.date||'').localeCompare(x.date||'')||String(y.taskId).localeCompare(String(x.taskId)):o=='az'?(x,y)=>x.taskName.localeCompare(y.taskName):(x,y)=>(x.status=='Done')-(y.status=='Done')||(x.deadline||'9').localeCompare(y.deadline||'9'));
+  const sig=JSON.stringify([...document.querySelectorAll('.flt select')].map(e=>e.value).concat([selDay,warnOnly,q]));if(sig!=lastSig){pg=1;lastSig=sig}
+  const pages=Math.max(1,Math.ceil(f.length/PAGE));pg=Math.min(pg,pages);const st=(pg-1)*PAGE;
   $('tcount').textContent=`(${pad(f.length)})`;
-  $('chips').innerHTML=(selCat?`<span class="chip" onclick="pickCat('')">🗂 ${esc(selCat)} ✕</span>`:'')+(selDay?`<span class="chip" onclick="pickDay('${selDay}')">📅 ${fmt(selDay)} ✕</span>`:'')+(warnOnly?'<span class="chip" onclick="warnOnly=false;render()">⚠️ Due soon ✕</span>':'');
-  $('tlist').innerHTML=f.map((t,i)=>{const w=warn(t);return `<div class="tr ${t.status=='Done'?'dn':''}"><span class="no">${pad(i+1)}</span>
+  $('chips').innerHTML=(selDay?`<span class="chip" onclick="pickDay('${selDay}')">📅 ${fmt(selDay)} ✕</span>`:'')+(warnOnly?'<span class="chip" onclick="warnOnly=false;render()">⚠️ Due soon ✕</span>':'');
+  $('tlist').innerHTML=f.slice(st,st+PAGE).map((t,i)=>{const w=warn(t);return `<div class="tr ${t.status=='Done'?'dn':''}"><span class="no">${pad(st+i+1)}</span>
    <span class="tt" onclick="openTask('${t.taskId}')">${esc(t.taskName)}${w?`<span class="wn ${w.c}">${w.txt}</span>`:''}<small>${esc(t.category)} · ${esc(t.assignedTo||'-')}${t.deadline?' · '+fmt(t.deadline):''}${t.givenBy?' · by '+esc(t.givenBy):''}</small></span>
    <button class="ck ${t.status=='Done'?'on':''}" onclick="toggle('${t.taskId}')">✓</button></div>`}).join('')||'<div class="mu" style="padding:16px;text-align:center">No tasks found.</div>';
+  let pb='';if(pages>1){pb=`<button ${pg==1?'disabled':''} onclick="gp(${pg-1})">‹</button>`;for(let i=1;i<=pages;i++)pb+=(i==1||i==pages||Math.abs(i-pg)<=1)?`<button class="${i==pg?'on':''}" onclick="gp(${i})">${i}</button>`:Math.abs(i-pg)==2?'<span>…</span>':'';pb+=`<button ${pg==pages?'disabled':''} onclick="gp(${pg+1})">›</button>`}
+  $('pager').innerHTML=(f.length?`<span class="mu pinfo">${st+1}–${Math.min(st+PAGE,f.length)} of ${f.length}</span>`:'')+pb;
 }
+function gp(n){pg=n;tasks()}
+function clearF(){document.querySelectorAll('.flt select').forEach(s=>s.value='');selDay='';warnOnly=false;$('q').value='';render()}
+document.querySelectorAll('.flt select').forEach(s=>s.onchange=render);
 function calendar(){
   const y=cm.getFullYear(),m=cm.getMonth(),first=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate(),t0=new Date(),today=iso(t0.getFullYear(),t0.getMonth(),t0.getDate());
   $('calTitle').textContent=`${MN[m].slice(0,3)} ${y}`;
@@ -56,7 +70,7 @@ function calendar(){
   }
   $('calGrid').innerHTML=h;
 }
-function render(){banner();chart();rings();progress();donut();tasks();calendar();upcoming()}
+function render(){banner();chart();rings();donut();tasks();calendar();upcoming()}
 function banner(){
   const T=S.tasks,w=T.filter(t=>(warn(t)||{}).c=='soon').length,o=T.filter(t=>(warn(t)||{}).c=='over').length,c=n=>T.filter(t=>t.status==n).length;
   $('sT').textContent=T.length;$('sI').textContent=c('In Progress');$('sP').textContent=c('Pending');$('sD').textContent=c('Done');$('bellN').textContent=w+o||'';
@@ -77,13 +91,6 @@ function rings(){
   $('rings').innerHTML=`<svg viewBox="0 0 160 160" style="width:100%;max-width:170px;display:block;margin:auto">${v.map((x,i)=>{const r=68-i*18,C=2*Math.PI*r;return `<circle cx="80" cy="80" r="${r}" fill="none" stroke="var(--bd)" stroke-width="11"/><circle cx="80" cy="80" r="${r}" fill="none" stroke="${x[1]}" stroke-width="11" stroke-linecap="round" stroke-dasharray="${x[2]/n*C} ${C}" transform="rotate(-90 80 80)"/>`}).join('')}</svg>
   <div class="legend">${v.map(x=>`<span><i style="background:${x[1]}"></i>${x[0]}: ${x[2]} (${Math.round(x[2]/n*100)}%)</span>`).join('')}</div>`;
 }
-function progress(){
-  const cats=S.cats.map(c=>c.name);S.tasks.forEach(t=>{if(t.category&&!cats.includes(t.category))cats.push(t.category)});
-  $('prog').innerHTML=cats.map(c=>{const T=S.tasks.filter(t=>t.category==c),d=T.filter(t=>t.status=='Done').length,p=T.length?Math.round(d/T.length*100):0,
-   st=T.map(t=>t.date).filter(Boolean).sort()[0],en=T.map(t=>t.deadline).filter(Boolean).sort().pop(),w=T.filter(warn).length;
-   return `<div class="pc ${selCat==c?'sel':''}" data-c="${esc(c)}" onclick="pickCat(this.dataset.c)"><small>Ongoing Project${w?` · <span class="wn soon">⚠️ ${w}</span>`:''}</small><b>${esc(c)}</b>
-   <div class="bar"><i style="width:${p}%"></i></div><small>${p} % Complete · ${d}/${T.length} tasks</small><div class="d2"><span>Start: ${fmt(st)}</span><span>End: ${fmt(en)}</span></div></div>`}).join('')||'<div class="card">No categories yet.</div>';
-}
 function donut(){
   const busy=S.teams.filter(m=>S.tasks.some(t=>t.assignedTo==m.name&&t.status!='Done')).length,n=S.teams.length,p=n?Math.round(busy/n*100):0,C=2*Math.PI*58;
   $('donut').innerHTML=`<svg viewBox="0 0 150 150" style="width:100%;max-width:170px;display:block;margin:auto"><circle cx="75" cy="75" r="58" fill="none" stroke="var(--bd)" stroke-width="18"/><circle cx="75" cy="75" r="58" fill="none" stroke="#7b6ef6" stroke-width="18" stroke-linecap="round" stroke-dasharray="${p/100*C} ${C}" transform="rotate(-90 75 75)"/>
@@ -94,7 +101,6 @@ function upcoming(){
   const u=S.tasks.filter(t=>t.status!='Done'&&t.deadline).sort((a,b)=>a.deadline.localeCompare(b.deadline)).slice(0,6);
   $('upc').innerHTML=u.map(t=>{const w=warn(t);return `<div class="up ${w?w.c:''}" onclick="openTask('${t.taskId}')"><b>${esc(t.taskName)}</b><small>${esc(t.category)} · ${esc(t.assignedTo||'-')}<br>${fmt(t.deadline)} ${w?`<span class="wn ${w.c}">${w.txt}</span>`:''}</small></div>`}).join('')||'<div class="mu">No upcoming deadlines.</div>';
 }
-function pickCat(c){selCat=selCat==c?'':c;render()}
 function pickDay(k){selDay=selDay==k?'':k;render()}
 function mv(n){cm=new Date(cm.getFullYear(),cm.getMonth()+n,1);calendar()}
 function go(id){$(id).scrollIntoView({behavior:'smooth'});side(0)}

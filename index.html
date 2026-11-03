@@ -24,6 +24,7 @@
   <div class="ucard"><i class="av" style="background:#7b6ef6">MK</i><div><b>Mamun Khan</b><small>Manager</small></div></div>
 </aside>
 <main class="main">
+<div class="frz">
 <header class="top">
   <button class="burger" onclick="side(1)">☰</button>
   <div><h1>Dashboard</h1><small id="today"></small></div>
@@ -33,28 +34,31 @@
   <button class="ico" onclick="load(1)" title="Refresh">⟳</button>
   <button class="ico" id="themeBtn" onclick="theme()">🌙</button>
 </header>
+<div class="stats">
+  <div class="st s1"><span>✔</span><div><b id="sT">0</b><small>Total Task</small></div></div>
+  <div class="st s2"><span>◔</span><div><b id="sI">0</b><small>In Progress</small></div></div>
+  <div class="st s3"><span>⏳</span><div><b id="sP">0</b><small>Pending</small></div></div>
+  <div class="st s4"><span>✓</span><div><b id="sD">0</b><small>Completed</small></div></div>
+</div>
+</div>
 <div class="cols">
 <div class="mc">
   <section class="banner"><div><small>Welcome</small><h2>Your Task Management Area</h2><p id="bnTxt"></p>
     <button class="btn" onclick="warnOnly=true;render();go('tasksCard')">View due soon</button></div><div class="art">🗓️</div></section>
-  <div class="stats">
-    <div class="st s1"><span>✔</span><div><b id="sT">0</b><small>Total Task</small></div></div>
-    <div class="st s2"><span>◔</span><div><b id="sI">0</b><small>In Progress</small></div></div>
-    <div class="st s3"><span>⏳</span><div><b id="sP">0</b><small>Pending</small></div></div>
-    <div class="st s4"><span>✓</span><div><b id="sD">0</b><small>Completed</small></div></div>
-  </div>
-  <div class="two">
+  <div class="three">
     <section class="card"><h3>Total work</h3><div id="chart"></div></section>
     <section class="card"><h3>Task Percentage</h3><div id="rings"></div></section>
-  </div>
-  <div class="two">
-    <section id="progCard"><h3>Work Progress</h3><div class="pg" id="prog"></div></section>
     <section class="card"><h3>Working Status</h3><div id="donut"></div></section>
   </div>
   <section class="card" id="tasksCard">
-    <div class="chead"><h3>My Tasks <span class="mu" id="tcount"></span></h3>
-      <div class="fl"><select id="fA" onchange="render()"></select><select id="fS" onchange="render()"></select></div></div>
-    <div id="chips"></div><div id="tlist"></div>
+    <div class="chead"><h3>My Tasks <span class="mu" id="tcount"></span></h3><button class="btn ghost sm" onclick="clearF()">✕ Clear filters</button></div>
+    <div class="flt">
+      <select id="fCt"></select><select id="fA"></select><select id="fS"></select><select id="fG"></select>
+      <select id="fM"></select>
+      <select id="fD"><option value="">Any deadline</option><option value="soon">⚠️ Due soon</option><option value="over">⛔ Overdue</option><option value="today">Due today</option><option value="week">Next 7 days</option><option value="none">No deadline</option></select>
+      <select id="fO"><option value="">Sort: Deadline</option><option value="new">Sort: Newest</option><option value="az">Sort: Name A–Z</option></select>
+    </div>
+    <div id="chips"></div><div id="tlist"></div><div class="pager" id="pager"></div>
   </section>
 </div>
 <div class="rc">
