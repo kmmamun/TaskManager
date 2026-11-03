@@ -31,7 +31,7 @@ function warn(t){
 function opts(el,vals,first){$(el).innerHTML=(first!=null?`<option value="">${first}</option>`:'')+vals.map(v=>`<option>${esc(v)}</option>`).join('')}
 function fill(){
   const k=[$('fA').value,$('fS').value];
-  opts('fP',S.cats.map(c=>c.name),'All Projects');$('fP').value=selCat;opts('fA',S.teams.map(m=>m.name),'All Managers');opts('fS',STATUS,'Status');$('fA').value=k[0];$('fS').value=k[1];
+  opts('fA',S.teams.map(m=>m.name),'All Managers');opts('fS',STATUS,'Status');$('fA').value=k[0];$('fS').value=k[1];
   opts('fCat',S.cats.map(c=>c.name));opts('fMgr',S.teams.map(m=>m.name));opts('fSt',STATUS);
 }
 function tasks(){
@@ -94,7 +94,7 @@ function upcoming(){
   const u=S.tasks.filter(t=>t.status!='Done'&&t.deadline).sort((a,b)=>a.deadline.localeCompare(b.deadline)).slice(0,6);
   $('upc').innerHTML=u.map(t=>{const w=warn(t);return `<div class="up ${w?w.c:''}" onclick="openTask('${t.taskId}')"><b>${esc(t.taskName)}</b><small>${esc(t.category)} · ${esc(t.assignedTo||'-')}<br>${fmt(t.deadline)} ${w?`<span class="wn ${w.c}">${w.txt}</span>`:''}</small></div>`}).join('')||'<div class="mu">No upcoming deadlines.</div>';
 }
-function pickCat(c){selCat=selCat==c?'':c;$('fP').value=selCat;render()}
+function pickCat(c){selCat=selCat==c?'':c;render()}
 function pickDay(k){selDay=selDay==k?'':k;render()}
 function mv(n){cm=new Date(cm.getFullYear(),cm.getMonth()+n,1);calendar()}
 function go(id){$(id).scrollIntoView({behavior:'smooth'});side(0)}
