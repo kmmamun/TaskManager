@@ -31,24 +31,8 @@ function warn(t){
 function opts(el,vals,first){$(el).innerHTML=(first!=null?`<option value="">${first}</option>`:'')+vals.map(v=>`<option>${esc(v)}</option>`).join('')}
 function fill(){
   const k=[$('fA').value,$('fS').value];
-  opts('fA',S.teams.map(m=>m.name),'All Managers');opts('fS',STATUS,'Status');$('fA').value=k[0];$('fS').value=k[1];
+  opts('fP',S.cats.map(c=>c.name),'All Projects');$('fP').value=selCat;opts('fA',S.teams.map(m=>m.name),'All Managers');opts('fS',STATUS,'Status');$('fA').value=k[0];$('fS').value=k[1];
   opts('fCat',S.cats.map(c=>c.name));opts('fMgr',S.teams.map(m=>m.name));opts('fSt',STATUS);
-}
-function render(){cards();tasks();calendar();team();const w=S.tasks.filter(warn).length;$('bellN').textContent=w||''}
-function cards(){
-  const cats=S.cats.map(c=>c.name);S.tasks.forEach(t=>{if(t.category&&!cats.includes(t.category))cats.push(t.category)});
-  $('cards').innerHTML=cats.map(c=>{
-    const T=S.tasks.filter(t=>t.category==c),n=T.length,d=T.filter(t=>t.status=='Done').length,w=T.filter(warn).length,
-    ip=T.filter(t=>t.status=='In Progress').length,pe=T.filter(t=>t.status=='Pending').length,
-    next=T.filter(t=>t.status!='Done'&&t.deadline).map(t=>t.deadline).sort()[0],nw=next&&warn({status:'x',deadline:next}),
-    who=[...new Set(T.map(t=>t.assignedTo).filter(Boolean))];
-    return `<div class="card pc ${selCat==c?'sel':''}" data-c="${esc(c)}" onclick="pickCat(this.dataset.c)">
-     <div class="ph"><span class="pi">${esc(ini(c)[0])}</span><div><b>${esc(c)}</b><small>${n} task${n==1?'':'s'}</small></div>
-     ${w?`<span class="tag pri">⚠ ${w} DUE SOON</span>`:n&&d==n?'<span class="tag cmp">COMPLETED</span>':''}</div>
-     Task Done: <b>${d}</b> / ${n}<div class="bar"><i style="width:${n?d/n*100:0}%"></i></div>
-     <div class="tags">${ip?`<span class="tag t1">${ip} IN PROGRESS</span>`:''}${pe?`<span class="tag t2">${pe} PENDING</span>`:''}${d?`<span class="tag cmp">${d} DONE</span>`:''}</div>
-     <div class="avs">${who.slice(0,4).map(av).join('')}${who.length>4?`<i class="av" style="background:#cbd5e1;color:#475569">+${who.length-4}</i>`:''}</div>
-     ${next?`<span class="tag due ${nw?nw.c:''}">DUE DATE: ${fmt(next).toUpperCase()}</span>`:''}</div>`}).join('')||'<div class="card">No categories yet.</div>';
 }
 function tasks(){
   const q=$('q').value.toLowerCase(),a=$('fA').value,s=$('fS').value;
@@ -72,11 +56,45 @@ function calendar(){
   }
   $('calGrid').innerHTML=h;
 }
-function team(){
-  $('teamBox').innerHTML=S.teams.map(m=>{const T=S.tasks.filter(t=>t.assignedTo==m.name),d=T.filter(t=>t.status=='Done').length,w=T.filter(warn).length;
-   return `<div class="tm">${av(m.name)}<div><b>${esc(m.name)}</b> ${w?`<span class="wn soon">⚠️ ${w}</span>`:''}<br><small>${d}/${T.length} completed</small><div class="bar" style="margin:4px 0 0"><i style="width:${T.length?d/T.length*100:0}%"></i></div></div></div>`}).join('')||'<div class="mu">No members yet.</div>';
+function render(){banner();chart();rings();progress();donut();tasks();calendar();upcoming()}
+function banner(){
+  const T=S.tasks,w=T.filter(t=>(warn(t)||{}).c=='soon').length,o=T.filter(t=>(warn(t)||{}).c=='over').length,c=n=>T.filter(t=>t.status==n).length;
+  $('sT').textContent=T.length;$('sI').textContent=c('In Progress');$('sP').textContent=c('Pending');$('sD').textContent=c('Done');$('bellN').textContent=w+o||'';
+  $('bnTxt').textContent=w+o?`⚠️ ${w} task${w==1?'':'s'} due soon${o?` and ${o} overdue`:''}. Check them before the deadline.`:'All caught up — no deadlines close right now.';
 }
-function pickCat(c){selCat=selCat==c?'':c;render()}
+const sm=p=>p.map((q,i)=>i?`C${(p[i-1][0]+q[0])/2},${p[i-1][1]} ${(p[i-1][0]+q[0])/2},${q[1]} ${q[0]},${q[1]}`:`M${q[0]},${q[1]}`).join('');
+function chart(){
+  const n=new Date(),ms=Array.from({length:7},(_,i)=>{const d=new Date(n.getFullYear(),n.getMonth()-6+i,1);return{k:iso(d.getFullYear(),d.getMonth(),1).slice(0,7),l:MN[d.getMonth()].slice(0,3)}});
+  const a=ms.map(m=>S.tasks.filter(t=>(t.date||'').startsWith(m.k)).length),b=ms.map(m=>S.tasks.filter(t=>(t.date||'').startsWith(m.k)&&t.status=='Done').length),mx=Math.max(5,...a);
+  const X=i=>30+i*(380/6),Y=v=>140-v/mx*125,pa=a.map((v,i)=>[X(i),Y(v)]),pb=b.map((v,i)=>[X(i),Y(v)]);
+  $('chart').innerHTML=`<svg viewBox="0 0 420 170" style="width:100%">${[0,1,2,3].map(i=>`<line x1="30" x2="410" y1="${140-i*125/3}" y2="${140-i*125/3}" stroke="var(--bd)"/><text x="4" y="${144-i*125/3}" font-size="9" fill="var(--mu)">${Math.round(mx*i/3)}</text>`).join('')}
+  <path d="${sm(pa)} L410,140 L30,140Z" fill="#7b6ef618"/><path d="${sm(pa)}" fill="none" stroke="#7b6ef6" stroke-width="2.5"/><path d="${sm(pb)}" fill="none" stroke="#4fd08c" stroke-width="2" stroke-dasharray="4 3"/>
+  ${pa.map((q,i)=>`<circle cx="${q[0]}" cy="${q[1]}" r="3" fill="#7b6ef6"/><text x="${q[0]}" y="158" font-size="9" fill="var(--mu)" text-anchor="middle">${ms[i].l}</text>`).join('')}</svg>
+  <div class="legend" style="grid-template-columns:1fr 1fr"><span><i style="background:#7b6ef6"></i>Tasks created</span><span><i style="background:#4fd08c"></i>Completed</span></div>`;
+}
+function rings(){
+  const T=S.tasks,n=T.length||1,v=[['Done','#4fd08c',T.filter(t=>t.status=='Done').length],['In Progress','#5cc3bb',T.filter(t=>t.status=='In Progress').length],['Pending','#f4948a',T.filter(t=>t.status=='Pending').length]];
+  $('rings').innerHTML=`<svg viewBox="0 0 160 160" style="width:100%;max-width:170px;display:block;margin:auto">${v.map((x,i)=>{const r=68-i*18,C=2*Math.PI*r;return `<circle cx="80" cy="80" r="${r}" fill="none" stroke="var(--bd)" stroke-width="11"/><circle cx="80" cy="80" r="${r}" fill="none" stroke="${x[1]}" stroke-width="11" stroke-linecap="round" stroke-dasharray="${x[2]/n*C} ${C}" transform="rotate(-90 80 80)"/>`}).join('')}</svg>
+  <div class="legend">${v.map(x=>`<span><i style="background:${x[1]}"></i>${x[0]}: ${x[2]} (${Math.round(x[2]/n*100)}%)</span>`).join('')}</div>`;
+}
+function progress(){
+  const cats=S.cats.map(c=>c.name);S.tasks.forEach(t=>{if(t.category&&!cats.includes(t.category))cats.push(t.category)});
+  $('prog').innerHTML=cats.map(c=>{const T=S.tasks.filter(t=>t.category==c),d=T.filter(t=>t.status=='Done').length,p=T.length?Math.round(d/T.length*100):0,
+   st=T.map(t=>t.date).filter(Boolean).sort()[0],en=T.map(t=>t.deadline).filter(Boolean).sort().pop(),w=T.filter(warn).length;
+   return `<div class="pc ${selCat==c?'sel':''}" data-c="${esc(c)}" onclick="pickCat(this.dataset.c)"><small>Ongoing Project${w?` · <span class="wn soon">⚠️ ${w}</span>`:''}</small><b>${esc(c)}</b>
+   <div class="bar"><i style="width:${p}%"></i></div><small>${p} % Complete · ${d}/${T.length} tasks</small><div class="d2"><span>Start: ${fmt(st)}</span><span>End: ${fmt(en)}</span></div></div>`}).join('')||'<div class="card">No categories yet.</div>';
+}
+function donut(){
+  const busy=S.teams.filter(m=>S.tasks.some(t=>t.assignedTo==m.name&&t.status!='Done')).length,n=S.teams.length,p=n?Math.round(busy/n*100):0,C=2*Math.PI*58;
+  $('donut').innerHTML=`<svg viewBox="0 0 150 150" style="width:100%;max-width:170px;display:block;margin:auto"><circle cx="75" cy="75" r="58" fill="none" stroke="var(--bd)" stroke-width="18"/><circle cx="75" cy="75" r="58" fill="none" stroke="#7b6ef6" stroke-width="18" stroke-linecap="round" stroke-dasharray="${p/100*C} ${C}" transform="rotate(-90 75 75)"/>
+  <text x="75" y="75" text-anchor="middle" font-size="24" font-weight="600" fill="var(--tx)">${p}%</text><text x="75" y="93" text-anchor="middle" font-size="10" fill="var(--mu)">Member Working</text></svg>
+  <div class="mu" style="text-align:center;margin-top:8px;font-size:12px">${busy} of ${n} members have open tasks <a href="#" onclick="openTeam();return false" style="color:var(--pu)">⚙</a></div>`;
+}
+function upcoming(){
+  const u=S.tasks.filter(t=>t.status!='Done'&&t.deadline).sort((a,b)=>a.deadline.localeCompare(b.deadline)).slice(0,6);
+  $('upc').innerHTML=u.map(t=>{const w=warn(t);return `<div class="up ${w?w.c:''}" onclick="openTask('${t.taskId}')"><b>${esc(t.taskName)}</b><small>${esc(t.category)} · ${esc(t.assignedTo||'-')}<br>${fmt(t.deadline)} ${w?`<span class="wn ${w.c}">${w.txt}</span>`:''}</small></div>`}).join('')||'<div class="mu">No upcoming deadlines.</div>';
+}
+function pickCat(c){selCat=selCat==c?'':c;$('fP').value=selCat;render()}
 function pickDay(k){selDay=selDay==k?'':k;render()}
 function mv(n){cm=new Date(cm.getFullYear(),cm.getMonth()+n,1);calendar()}
 function go(id){$(id).scrollIntoView({behavior:'smooth'});side(0)}
@@ -121,6 +139,7 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;
 function installApp(){deferred?.prompt();deferred=null;$('installBtn').style.display='none'}
 document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target==o&&o.id!='mKey')o.classList.remove('show')}));
 if(localStorage.tmTheme=='d'){document.body.classList.add('dark');$('themeBtn').textContent='☀️'}
+$('today').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});$('dpill').textContent='📅 '+new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
 fill();render();
 if(CONFIG.API_URL.startsWith('http'))load();else toast('config.js এ API_URL বসান',1);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
