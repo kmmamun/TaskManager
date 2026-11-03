@@ -2,52 +2,49 @@
 <html lang="en"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#03bda9">
+<meta name="theme-color" content="#f05a28">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="TaskManager">
 <link rel="manifest" href="manifest.json"><link rel="icon" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<title>Task Manager</title>
-<link rel="stylesheet" href="app.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<title>Task Manager</title><link rel="stylesheet" href="app.css">
 </head><body>
-<div class="shell">
 <div class="scrim" id="scrim" onclick="side(0)"></div>
+<div class="shell">
 <aside class="side" id="side">
-  <div class="brand"><img src="icons/icon-192.png" alt="">Task Manager</div>
-  <button class="nav on" onclick="scrollTo({top:0,behavior:'smooth'});side(0)">⊞ Dashboard</button>
-  <button class="nav" onclick="openCats();side(0)">🏷️ Categories</button>
-  <button class="nav" onclick="openTeam();side(0)">👤 Team Members</button>
-  <div class="lbl">TEAM</div><div id="sideTeam"></div>
-  <button class="nav" id="installBtn" style="display:none" onclick="installApp()">📲 Install App</button>
+  <div class="brand"><img src="icons/icon-192.png" alt=""><span>Task Manager</span></div>
+  <button class="nav on" onclick="scrollTo({top:0,behavior:'smooth'});side(0)">▦ DASHBOARD</button>
+  <button class="nav" onclick="go('cards')">🗂 PROJECTS</button>
+  <button class="nav" onclick="go('tasksCard')">☰ MY TASK</button>
+  <button class="nav" onclick="go('calCard')">📅 CALENDAR</button>
+  <button class="nav" onclick="openCats();side(0)">🏷 CATEGORIES</button>
+  <button class="nav" onclick="openTeam();side(0)">👥 TEAM</button>
+  <button class="nav" id="installBtn" style="display:none" onclick="installApp()">📲 INSTALL APP</button>
 </aside>
 <main class="main">
 <header class="top">
-  <button class="ico burger" onclick="side(1)">☰</button>
-  <div class="title" id="greet">Dashboard</div>
+  <button class="burger" onclick="side(1)">☰</button>
+  <div class="search"><span>🔍</span><input id="q" placeholder="Search" oninput="render()"></div>
   <div class="grow"></div>
-  <div class="search"><span>🔍</span><input id="q" placeholder="Search tasks..." oninput="pg=1;render()"></div>
-  <button class="ico pri hide-m" onclick="openTask()">+</button>
-  <button class="ico" onclick="load(1)" title="Refresh">🔄</button>
+  <button class="ico" onclick="openTask()" title="New task">＋</button>
+  <button class="ico" id="bell" onclick="warnOnly=!warnOnly;render()" title="Due soon">🔔<b id="bellN"></b></button>
+  <button class="ico" onclick="load(1)" title="Refresh">⟳</button>
   <button class="ico" id="themeBtn" onclick="theme()">🌙</button>
+  <div class="me">MK</div>
 </header>
-<div class="wrap">
-  <div class="stats">
-    <div class="stat"><span>Total</span><b id="sT">0</b></div>
-    <div class="stat"><span>Pending</span><b id="sP">0</b></div>
-    <div class="stat"><span>In Progress</span><b id="sI">0</b></div>
-    <div class="stat"><span>Completed</span><b id="sD">0</b></div>
-    <div class="stat warn"><span>⚠️ Due soon / Overdue</span><b id="sW">0</b></div>
-  </div>
-  <div class="grid">
-    <section class="card">
-      <div class="chead"><b>Project Summary</b><div class="filters">
-        <select id="fM" onchange="pg=1;render()"></select><select id="fC" onchange="pg=1;render()"></select>
-        <select id="fA" onchange="pg=1;render()"></select><select id="fS" onchange="pg=1;render()"></select></div></div>
-      <div class="list" id="list"></div><div class="pager" id="pager"></div>
+<div class="cols">
+  <div class="c1" id="cards"></div>
+  <section class="card c2" id="tasksCard">
+    <div class="chead"><b>My Tasks <span class="mu" id="tcount"></span></b>
+      <div class="fl"><select id="fA" onchange="render()"></select><select id="fS" onchange="render()"></select></div></div>
+    <div id="chips"></div><div id="tlist"></div>
+  </section>
+  <div class="c3">
+    <section class="card" id="calCard">
+      <div class="chead"><b id="calTitle"></b><div><button class="arr" onclick="mv(-1)">‹</button> <button class="arr" onclick="mv(1)">›</button></div></div>
+      <div class="cal" id="calGrid"></div>
     </section>
-    <section class="card"><b>Overall Progress</b>
-      <div style="height:220px;margin-top:10px"><canvas id="pie"></canvas></div><div id="legend"></div></section>
+    <section class="card"><div class="chead"><b>Team</b><button class="arr" onclick="openTeam()">⚙</button></div><div id="teamBox"></div></section>
   </div>
 </div></main></div>
 <button class="fab" onclick="openTask()">+</button>
@@ -60,12 +57,12 @@
   <div class="fg"><label>Status</label><select id="fSt"></select></div></div>
   <div class="fg"><label>Given By</label><select id="fGiv" onchange="givChg()"></select>
   <input id="fGivNew" placeholder="নতুন নাম লিখুন..." style="display:none;margin-top:8px"></div>
-  <div class="acts"><button class="btn ghost" onclick="closeM('mTask')">Cancel</button><button class="btn" id="saveBtn" onclick="saveTask()">Save</button></div></div></div>
-
-<div class="ov" id="mCats"><div class="modal"><h2>🏷️ Categories</h2>
+  <div class="acts"><button class="btn ghost" id="delBtn" onclick="delTask()" style="margin-right:auto">🗑 Delete</button>
+  <button class="btn ghost" onclick="closeM('mTask')">Cancel</button><button class="btn" id="saveBtn" onclick="saveTask()">Save</button></div></div></div>
+<div class="ov" id="mCats"><div class="modal"><h2>🏷 Categories</h2>
   <div class="row"><input id="newCat" placeholder="New category"><button class="btn" onclick="addItem('addCategory','newCat')">Add</button></div>
   <div class="box" id="catList"></div><div class="acts"><button class="btn ghost" onclick="closeM('mCats')">Close</button></div></div></div>
-<div class="ov" id="mTeam"><div class="modal"><h2>👤 Team Members</h2>
+<div class="ov" id="mTeam"><div class="modal"><h2>👥 Team Members</h2>
   <div class="row"><input id="newMem" placeholder="Member name"><button class="btn" onclick="addItem('addTeamMember','newMem')">Add</button></div>
   <div class="box" id="teamList"></div><div class="acts"><button class="btn ghost" onclick="closeM('mTeam')">Close</button></div></div></div>
 <div class="ov" id="mKey"><div class="modal"><h2>🔒 Passcode</h2>
