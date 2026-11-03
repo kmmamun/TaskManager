@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Task Manager</title>
+  <meta name="theme-color" content="#1f242e">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="TaskManager">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icons/favicon.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+  <script>
+    // Apply saved theme before paint (no flash)
+    (function () {
+      try {
+        var t = JSON.parse(localStorage.getItem('tm_theme') || 'null');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- Splash -->
+  <div id="boot" class="screen">
+    <img class="boot-mark" src="icons/logo-mark.png" alt="Task Manager">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Setup notice (config.js not filled) -->
+  <div id="setup" class="screen hidden">
+    <div class="auth-card">
+      <h1>Setup needed</h1>
+      <p>Open <code>config.js</code> and paste your Apps Script Web App URL and Google Client ID. See the setup guide for steps.</p>
+    </div>
+  </div>
+
+  <!-- Login -->
+  <div id="login" class="screen hidden">
+    <div class="auth-card">
+      <img class="logo-full logo-light" src="icons/logo-full.png" alt="Task Manager">
+      <img class="logo-full logo-dark" src="icons/logo-full-dark.png" alt="Task Manager">
+      <p class="auth-sub">Plan tasks, track deadlines and share a workspace with your team.</p>
+      <div id="gbtn" class="gbtn"></div>
+      <p class="auth-note" id="loginMsg">Sign in with your Google account. Your own workspace is created automatically.</p>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div id="app" class="hidden">
+    <div class="shell">
+
+      <!-- Sidebar (desktop) -->
+      <aside class="sidebar">
+        <div class="brand">
+          <img src="icons/logo-mark.png" alt="">
+          <span>Task Manager</span>
+        </div>
+        <button class="ws-chip" data-act="open-ws" title="Switch workspace">
+          <span class="ws-ic" data-ic="layers"></span>
+          <span class="ws-name" id="wsNameSide">Workspace</span>
+          <span class="ws-caret" data-ic="chevron"></span>
+        </button>
+        <nav class="nav">
+          <button class="nav-item active" data-act="nav-home"><span data-ic="grid"></span>Dashboard</button>
+          <button class="nav-item" data-act="nav-tasks"><span data-ic="list"></span>Tasks</button>
+          <div class="nav-label">Manage</div>
+          <button class="nav-item" data-act="open-list" data-kind="categories"><span data-ic="tag"></span>Categories</button>
+          <button class="nav-item" data-act="open-list" data-kind="team"><span data-ic="users"></span>Team members</button>
+          <button class="nav-item" data-act="open-list" data-kind="givenBy"><span data-ic="user"></span>Given by names</button>
+          <button class="nav-item" data-act="open-share"><span data-ic="share"></span>Share &amp; access</button>
+        </nav>
+        <div class="side-foot">
+          <button class="me-chip" data-act="open-me">
+            <span class="avatar" id="meAvatarSide"></span>
+            <span class="me-text"><b id="meNameSide"></b><small id="meEmailSide"></small></span>
+          </button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="top-left">
+            <img class="top-mark" src="icons/logo-mark.png" alt="">
+            <div>
+              <div class="greet" id="greet">Dashboard</div>
+              <button class="ws-mini" data-act="open-ws"><span id="wsNameTop">Workspace</span><span data-ic="chevron"></span></button>
+            </div>
+          </div>
+          <div class="top-right">
+            <div class="search"><span data-ic="search"></span><input id="q" type="search" placeholder="Search tasks…" autocomplete="off"></div>
+            <button class="btn primary desk-only" data-act="new-task" id="btnNewTop"><span data-ic="plus"></span>New task</button>
+            <button class="icon-btn" data-act="refresh" title="Refresh"><span data-ic="refresh"></span></button>
+            <button class="icon-btn" data-act="toggle-theme" title="Theme"><span id="themeIc"></span></button>
+          </div>
+        </header>
+
+        <div class="container">
+          <div id="banner"></div>
+
+          <section class="stats" id="stats"></section>
+
+          <section class="grid" id="tasksSection">
+            <div class="card">
+              <div class="card-head">
+                <h3>Tasks</h3>
+                <button class="chip" id="alertChip" data-act="toggle-alerts"><span data-ic="alert"></span><span id="alertChipTxt">Alerts</span></button>
+              </div>
+              <div class="filters">
+                <select id="fMonth" class="filter"><option value="">All months</option></select>
+                <select id="fCategory" class="filter"><option value="">All categories</option></select>
+                <select id="fAssigned" class="filter"><option value="">All managers</option></select>
+                <select id="fStatus" class="filter"><option value="">All status</option></select>
+              </div>
+              <div class="mobile-search"><span data-ic="search"></span><input id="q2" type="search" placeholder="Search tasks…" autocomplete="off"></div>
+
+              <div class="table-wrap desk-only">
+                <table>
+                  <thead><tr><th>Task</th><th>Manager</th><th>Date</th><th>Deadline</th><th>Status</th><th>Given by</th><th></th></tr></thead>
+                  <tbody id="tbody"></tbody>
+                </table>
+              </div>
+              <div class="cards mob-only" id="cards"></div>
+              <div class="pager" id="pager"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-head"><h3>Overall progress</h3></div>
+              <div class="chart-box"><canvas id="pie"></canvas></div>
+              <div class="legend" id="legend"></div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- Mobile bottom navigation -->
+    <nav class="bottom-nav">
+      <button data-act="nav-home" class="bn active" id="bnHome"><span data-ic="home"></span><small>Home</small></button>
+      <button data-act="nav-tasks" class="bn" id="bnTasks"><span data-ic="list"></span><small>Tasks</small></button>
+      <button data-act="new-task" class="bn-add" id="bnAdd" aria-label="New task"><span data-ic="plus"></span></button>
+      <button data-act="open-manage" class="bn"><span data-ic="users"></span><small>Manage</small></button>
+      <button data-act="open-me" class="bn"><span data-ic="user"></span><small>Me</small></button>
+    </nav>
+  </div>
+
+  <div id="modalRoot"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="app.js" defer></script>
+</body>
+</html>
