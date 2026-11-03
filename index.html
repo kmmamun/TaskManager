@@ -39,18 +39,7 @@
   <div id="setup" class="screen hidden">
     <div class="auth-card">
       <h1>Setup needed</h1>
-      <p>Open <code>config.js</code> and paste your Apps Script Web App URL and Google Client ID. See the setup guide for steps.</p>
-    </div>
-  </div>
-
-  <!-- Login -->
-  <div id="login" class="screen hidden">
-    <div class="auth-card">
-      <img class="logo-full logo-light" src="icons/logo-full.png" alt="Task Manager">
-      <img class="logo-full logo-dark" src="icons/logo-full-dark.png" alt="Task Manager">
-      <p class="auth-sub">Plan tasks, track deadlines and share a workspace with your team.</p>
-      <div id="gbtn" class="gbtn"></div>
-      <p class="auth-note" id="loginMsg">Sign in with your Google account. Your own workspace is created automatically.</p>
+      <p>Open <code>config.js</code> and paste your Apps Script Web App URL. See the setup guide for steps.</p>
     </div>
   </div>
 
@@ -64,11 +53,6 @@
           <img src="icons/logo-mark.png" alt="">
           <span>Task Manager</span>
         </div>
-        <button class="ws-chip" data-act="open-ws" title="Switch workspace">
-          <span class="ws-ic" data-ic="layers"></span>
-          <span class="ws-name" id="wsNameSide">Workspace</span>
-          <span class="ws-caret" data-ic="chevron"></span>
-        </button>
         <nav class="nav">
           <button class="nav-item active" data-act="nav-home"><span data-ic="grid"></span>Dashboard</button>
           <button class="nav-item" data-act="nav-tasks"><span data-ic="list"></span>Tasks</button>
@@ -76,12 +60,11 @@
           <button class="nav-item" data-act="open-list" data-kind="categories"><span data-ic="tag"></span>Categories</button>
           <button class="nav-item" data-act="open-list" data-kind="team"><span data-ic="users"></span>Team members</button>
           <button class="nav-item" data-act="open-list" data-kind="givenBy"><span data-ic="user"></span>Given by names</button>
-          <button class="nav-item" data-act="open-share"><span data-ic="share"></span>Share &amp; access</button>
         </nav>
         <div class="side-foot">
           <button class="me-chip" data-act="open-me">
-            <span class="avatar" id="meAvatarSide"></span>
-            <span class="me-text"><b id="meNameSide"></b><small id="meEmailSide"></small></span>
+            <span class="avatar" style="background:#00bba5"><span data-ic="settings"></span></span>
+            <span class="me-text"><b>Settings</b><small>Theme · Deadline warning</small></span>
           </button>
         </div>
       </aside>
@@ -92,7 +75,6 @@
             <img class="top-mark" src="icons/logo-mark.png" alt="">
             <div>
               <div class="greet" id="greet">Dashboard</div>
-              <button class="ws-mini" data-act="open-ws"><span id="wsNameTop">Workspace</span><span data-ic="chevron"></span></button>
             </div>
           </div>
           <div class="top-right">
@@ -148,7 +130,7 @@
       <button data-act="nav-tasks" class="bn" id="bnTasks"><span data-ic="list"></span><small>Tasks</small></button>
       <button data-act="new-task" class="bn-add" id="bnAdd" aria-label="New task"><span data-ic="plus"></span></button>
       <button data-act="open-manage" class="bn"><span data-ic="users"></span><small>Manage</small></button>
-      <button data-act="open-me" class="bn"><span data-ic="user"></span><small>Me</small></button>
+      <button data-act="open-me" class="bn"><span data-ic="settings"></span><small>Settings</small></button>
     </nav>
   </div>
 
@@ -157,7 +139,6 @@
 
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="app.js" defer></script>
 </body>
 </html>
