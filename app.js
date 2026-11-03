@@ -98,7 +98,7 @@ function donut(){
   <div class="mu" style="text-align:center;margin-top:8px;font-size:12px">${busy} of ${n} members have open tasks <a href="#" onclick="openTeam();return false" style="color:var(--pu)">⚙</a></div>`;
 }
 function upcoming(){
-  const u=S.tasks.filter(t=>t.status!='Done'&&t.deadline).sort((a,b)=>a.deadline.localeCompare(b.deadline)).slice(0,6);
+  const u=S.tasks.filter(t=>t.status!='Done'&&t.deadline).sort((a,b)=>a.deadline.localeCompare(b.deadline)).slice(0,15);
   $('upc').innerHTML=u.map(t=>{const w=warn(t);return `<div class="up ${w?w.c:''}" onclick="openTask('${t.taskId}')"><b>${esc(t.taskName)}</b><small>${esc(t.category)} · ${esc(t.assignedTo||'-')}<br>${fmt(t.deadline)} ${w?`<span class="wn ${w.c}">${w.txt}</span>`:''}</small></div>`}).join('')||'<div class="mu">No upcoming deadlines.</div>';
 }
 function pickDay(k){selDay=selDay==k?'':k;render()}

@@ -75,3 +75,13 @@ button{font:inherit;color:inherit;cursor:pointer}.mu{color:var(--mu);font-weight
 body.dark .prof img.logo{background:#fff;border-radius:10px;padding:6px 8px;box-sizing:border-box}
 .ico.add{background:var(--pu);color:#fff;font-size:22px;line-height:1}.ucard{margin-top:auto}
 @media(max-width:760px){.top{flex-wrap:wrap}.search{display:flex;order:9;flex-basis:100%;margin:6px 0 0}.top h1{margin-right:auto}.dpill{display:none}}
+
+/* v9 alignment */
+.nav{display:flex;align-items:center}.nav i{width:28px;font-style:normal;text-align:center;margin-right:8px;flex-shrink:0}
+.top .search,.top .dpill{height:44px;box-sizing:border-box;display:flex;align-items:center;background:var(--card);border:1px solid var(--pu);border-radius:10px;padding:0 16px;white-space:nowrap}
+.top .search{flex:1;margin-left:14px;gap:8px;white-space:normal}.ico{width:44px;height:44px}
+.cols{align-items:stretch}.rc>.card:last-child{flex:1;position:relative;min-height:300px}
+#upc{position:absolute;left:18px;right:18px;top:54px;bottom:14px;overflow:auto}
+.flt .btn{height:100%;padding:8px 10px;font-size:12px}
+@media(min-width:761px){.side{margin:18px 0 18px 18px;top:18px;height:calc(100vh - 36px);border-radius:18px}}
+@media(max-width:760px){.top .search{flex-basis:100%;margin:6px 0 0;order:9}.rc>.card:last-child{min-height:0}#upc{position:static;overflow:visible}}
